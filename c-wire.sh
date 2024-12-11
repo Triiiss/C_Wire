@@ -12,9 +12,7 @@ nb_arg=$#
 help=0
 id=0
 sec_trait=0
-time_start=`date | cut -d' ' -f5`
-start_s=`date | cut -d' ' -f5 | cut -d':' -f3`
-start_m=`date | cut -d' ' -f5 | cut -d':' -f2`
+time_start=`date +%s`
 
 
 function c_wire {
@@ -128,13 +126,14 @@ function c_wire {
 			done
 		else
 			echo "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load" | cat > "tmp/${station_type}_${conso_type}.csv"
-			for line in `tail +2 ${file_chm} ` ; do
+			for line in `more +2 ${file_chm}` ; do
 				hvb=`echo ${line} | cut -d';' -f2`
 				hva=`echo ${line} | cut -d';' -f3`
 				lv=`echo ${line} | cut -d';' -f4`
 				comp=`echo ${line} | cut -d';' -f5`
 				indiv=`echo ${line} | cut -d';' -f6`
 				
+				echo $line
 				
 				case ${station_type} in
 					'hvb') if [ ${hvb} != '-' ] && [ ${hva} == '-' ] && [ ${lv} == '-' ] ; then 
@@ -184,16 +183,8 @@ function c_wire {
 			done
 			
 			
-			time_end=`date | cut -d' ' -f5`
-			end_s=`date | cut -d' ' -f5 | cut -d':' -f3`
-			end_m=`date | cut -d' ' -f5 | cut -d':' -f2`
-			
-			echo "$start_m:$start_s  $time_start"
-			echo "$end_m:$end_s  $time_end"
-			
-		
-			
-			echo "Temps de traitement : ${sec_trait}s"
+			time_end=`date +%s`
+			echo "Temps de traitement : `expr ${time_end} - ${time_start}` s"
 			
 			./c-wire_exec		# The C program
 		fi		
@@ -216,7 +207,6 @@ if [ ${error} -ne 0 ] ; then		# Error
 		*) echo 'Problem unknown';; 
 	esac
 fi
-
 
 
 
