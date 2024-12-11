@@ -1,5 +1,5 @@
 #!/bin/bash
-
+error=0
 file_chm=$1
 station_type=$2
 conso_type=$3
@@ -9,66 +9,227 @@ help=$5
 all_args=$*
 nb_arg=$#
 
-error=0
+help=0
 id=0
+sec_trait=0
+time_start=`date | cut -d' ' -f5`
+start_s=`date | cut -d' ' -f5 | cut -d':' -f3`
+start_m=`date | cut -d' ' -f5 | cut -d':' -f2`
 
-if ([ ! -z $file_chm ] && [ $file_chm == '-h' ]) || ([ ! -z $station_type ] && [ $station_type == '-h' ]) || ([ ! -z $conso_type ] && [ $conso_type == '-h' ]) || ([ ! -z $id_central ] && [ $id_central == '-h' ]) || ([ ! -z $help ] && [ $help == '-h' ])  ; then	# Check if -h	
-	echo "A L'AIDE"
-else
-	if [ ! -z $file_chm ] && [ -e $file_chm ] ; then		# Check the file
-		if [ ! -f $file_chm ] ; then
-			echo "not file"
-			error=2
+
+function c_wire {
+	for arg in ${all_args} ; do
+		if [ ! -z ${arg} ] && [ ${arg} == '-h' ] ; then	# Check if -h	
+			help=1
 		fi
+	done
+
+	if [ ${help} -eq 1 ]  ; then		# print the help
+		echo
+		echo "Use : ./c-wire.sh [FILE] [STATION TYPE] [CONSUMMER TYPE].. [OPTION]\n"
+		echo "FILE :		The directory of the file you want to analyse. It has to be a file and can be a relative path or an absolute one."
+		echo "STATION TYPE :	The type of station you want to analyse. Possible values :
+		* hvb
+		* hva
+		* lv"
+		echo "CONSUMMER TYPE :The type of consumer you want to analyse. Possible values :
+		* comp ; compagnies type of consumers
+		* indiv ; individual consumers 
+		* all ; all types of consummers"
+		echo "			Warning hva and hvb cannot be with indiv or all."
+		echo "OPTION :"
+		echo "  -h --help 	To show the help screen. Helps on how to use the function. This option has priority"
+		echo "   N 		with N the number of the central/powerplant we want to analyse. The number is between 1 and 5 and has to exist within the file given."
 	else
-		echo "missing file"
-		error=1
-	fi
-
-
-	if [ ! -z $station_type ] ; then		# Check the type of station
-		if [ $station_type != 'hvb' ] && [ $station_type != 'hva' ] && [ $station_type != 'lv' ] ; then
-			echo 'station type incorrect'
-			error=2
+		if [ ! -z ${file_chm} ] && [ -e ${file_chm} ] ; then		# Check the file
+			if [ ! -f ${file_chm} ] ; then
+				echo "not file"
+				echo "Temps de traitement : ${sec_trait}s"
+				return 2
+			fi
+		else
+			echo ${file_chm}
+			echo "missing file"
+			echo "Temps de traitement : ${sec_trait}s"
+			return 1
 		fi
-	else
-		echo 'No arguments for station type'
-		error=1
-	fi
-	
-	
-	if [ ! -z $conso_type ] ; then		# Check the type of consummers
-		case $conso_type in
-			'indiv') if [ $station_type == 'hva' ] || [ $station_type == 'hvb' ] ; then
-				echo "$station_type cannot be with $conso_type"
-				error=3
-			fi;;
-			'all') if [ $station_type == 'hva' ] || [ $station_type == 'hvb' ] ; then
-				echo "$station_type cannot be with $conso_type"
-				error=3
-			fi;;
-			'comp') ;;
-			*) echo 'consummers type not valid'
-			error=2 ;;
-		esac
-	else
-		echo 'No arguments for consummers type'
-		error=1
-	fi
-	
-	if [ $id_central -le 5 ] && [ $id_central -gt 0 ] ; then		# Check the id central
-		id=1
-	fi
 
-	if [ $error -ne 0 ] ; then
-		case $error in
 
-			1) echo 'agrument missing';;
-			2) echo 'argument not valid';;
-			3) echo 'argument do no match';;
-			*) echo 'Problem unknown';; 
-		esac
-		return
+		if [ ! -z ${station_type} ] ; then		# Check the type of station
+			if [ ${station_type} != 'hvb' ] && [ ${station_type} != 'hva' ] && [ ${station_type} != 'lv' ] ; then
+				echo 'station type incorrect'
+				echo "Temps de traitement : ${sec_trait}s"
+				return 2
+			fi
+		else
+			echo 'No arguments for station type'
+			echo "Temps de traitement : ${sec_trait}s"
+			return 1
+		fi
+		
+		
+		if [ ! -z ${conso_type} ] ; then		# Check the type of consummers
+			case ${conso_type} in
+				'indiv') if [ ${station_type} == 'hva' ] || [ ${station_type} == 'hvb' ] ; then
+					echo "${station_type} cannot be with ${conso_type}"
+					echo "Temps de traitement : ${sec_trait}s"
+					return 3
+				fi;;
+				'all') if [ ${station_type} == 'hva' ] || [ ${station_type} == 'hvb' ] ; then
+					echo "${station_type} cannot be with ${conso_type}"
+					echo "Temps de traitement : ${sec_trait}s"
+					return 3
+				fi;;
+				'comp') ;;
+				*) echo 'consummers type not valid'
+				echo "Temps de traitement : ${sec_trait}s"
+				return 2 ;;
+			esac
+		else
+			echo 'No arguments for consummers type'
+			echo "Temps de traitement : ${sec_trait}s"
+			return 1
+		fi
+		
+		
+		if [ ! -z ${id_central} ] && [ ${id_central} -le 5 ] && [ ${id_central} -gt 0 ] ; then		# Check the id central
+			id=1
+		fi
+		
+		if [ ! -e "c-wire_exec" ] || [ ! -f "c-wire_exec" ] ; then	# Check the execution file
+			if [ ! -e "c-wire.c" ] && [ ! -f "c-wire.c" ] ; then
+				echo "Temps de traitement : ${sec_trait}s"
+				return 4
+			fi
+			ggc=`gcc -o c-wire_exec c-wire.c`
+			gcc_test=$?
+			
+			if [ ${gcc_test} -ne 0 ] ; then
+				echo "Temps de traitement : ${sec_trait}s"
+				return 5
+			fi
+		fi
+		
+		
+		if [ -e "tmp" ] && [ -d "tmp" ]; then		# Check for tmp and graph
+			rm -r tmp
+		fi
+		mkdir tmp
+		if [ ! -e graph ] || [ ! -d graph ] ; then
+			mkdir graph
+		fi
+		
+		if [ ${id} -eq 1 ] ; then
+			for line in `more -5 ${file_chm} ` ; do		# Check the id central
+				num=`echo ${line} | cut -d';' -f1`
+				if [ ${num} == ${id_central} ] ; then
+					echo ${line} | cat >> "tmp/central_${id_central}.csv"
+				fi
+			done
+		else
+			echo "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load" | cat > "tmp/${station_type}_${conso_type}.csv"
+			for line in `tail +2 ${file_chm} ` ; do
+				hvb=`echo ${line} | cut -d';' -f2`
+				hva=`echo ${line} | cut -d';' -f3`
+				lv=`echo ${line} | cut -d';' -f4`
+				comp=`echo ${line} | cut -d';' -f5`
+				indiv=`echo ${line} | cut -d';' -f6`
+				
+				
+				case ${station_type} in
+					'hvb') if [ ${hvb} != '-' ] && [ ${hva} == '-' ] && [ ${lv} == '-' ] ; then 
+						if [ ${conso_type} == 'comp' ] ; then
+							if [ ${comp} != '-' ] ; then
+								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
+							fi
+							
+						else
+							echo "Temps de traitement : ${sec_trait}s"
+							return 3
+						fi
+					fi ;;
+					'hva') if [ ${hvb} == '-' ] && [ ${hva} != '-' ] && [ ${lv} == '-' ] ; then 
+						if [ ${conso_type} == 'comp' ] ; then
+							if [ ${comp} != '-' ] ; then
+								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
+							fi
+							
+						else
+							echo "Temps de traitement : ${sec_trait}s"
+							return 3
+						fi
+					fi ;;
+					'lv') if [ ${hvb} == '-' ] && [ ${hva} == '-' ] && [ ${lv} != '-' ] ; then 
+						if [ ${conso_type} == 'all' ] ; then
+							if [ ${comp} != '-' ] || [ ${indiv} != '-' ] ; then
+								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
+							fi
+						elif [ ${conso_type} == 'comp' ] ; then
+							if [ ${comp} != '-' ] ; then
+								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
+							fi
+						elif [ ${conso_type} == 'indiv' ] ; then
+							if [ ${indiv} != '-' ] ; then
+								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
+							fi
+						else
+							echo "Temps de traitement : ${sec_trait}s"
+							return 3
+						fi
+					fi ;;
+					*) 
+						echo "Temps de traitement : ${sec_trait}s"
+						return 2 ;;
+				esac
+			done
+			
+			
+			time_end=`date | cut -d' ' -f5`
+			end_s=`date | cut -d' ' -f5 | cut -d':' -f3`
+			end_m=`date | cut -d' ' -f5 | cut -d':' -f2`
+			
+			echo "$start_m:$start_s  $time_start"
+			echo "$end_m:$end_s  $time_end"
+			
+		
+			
+			echo "Temps de traitement : ${sec_trait}s"
+			
+			./c-wire_exec		# The C program
+		fi		
 	fi
-	echo "quoi
+	return 0
+} 
+
+c_wire=`c_wire`
+error=$?
+
+echo -e "${c_wire}"
+
+if [ ${error} -ne 0 ] ; then		# Error 
+	case ${error} in 
+		1) echo 'agrument missing';;
+		2) echo 'argument not valid';;
+		3) echo 'arguments do no match';;
+		4) echo 'C program not found';;
+		5) echo 'C program didnt compile well';;
+		*) echo 'Problem unknown';; 
+	esac
 fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
