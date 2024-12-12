@@ -102,10 +102,10 @@ function c_wire {
 				echo "Temps de traitement : ${sec_trait}s"
 				return 4
 			fi
-			ggc=`gcc -o c-wire_exec c-wire.c`
-			gcc_test=$?
+			make=`make`
+			make_test=$?
 			
-			if [ ${gcc_test} -ne 0 ] ; then
+			if [ ${make_test} -ne 0 ] ; then
 				echo "Temps de traitement : ${sec_trait}s"
 				return 5
 			fi
@@ -121,34 +121,27 @@ function c_wire {
 		fi
 		
 		if [ ${id} -eq 1 ] ; then
-			for line in `more -5 ${file_chm} ` ; do		# Check the id central
-				num=`echo ${line} | cut -d';' -f1`
-				if [ ${num} == ${id_central} ] ; then
-					echo ${line} | cat >> "tmp/central_${id_central}.csv"
-				fi
-			done
-		else
-			echo "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load" | cat > "tmp/${station_type}_${conso_type}.csv"
+			echo "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load" | cat > "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 			case ${station_type} in
-				'hvb') grep -E "[0-9]+;[0-9]+;-;-;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+				'hvb') grep -E "${id_central};[0-9]+;-;-;-;-;[0-9]+;-" $file_chm | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 					if [ ${conso_type} == 'comp' ] ; then
-						grep -E "[0-9]+;[0-9]+;-;-;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+						grep -E "${id_central};[0-9]+;-;-;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 					else
 						echo "Temps de traitement : ${sec_trait}s"
 						return 3
 					fi;;
-				'hva') grep -E "[0-9]+;-;[0-9]+;-;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+				'hva') grep -E "${id_central};;-;[0-9]+;-;-;-;[0-9]+;-" $file_chm | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 					if [ ${conso_type} == 'comp' ] ; then
-						grep -E "[0-9]+;-;[0-9]+;-;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+						grep -E "${id_central};;-;[0-9]+;-;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 					else
 						echo "Temps de traitement : ${sec_trait}s"
 						return 3
 					fi;;
-				'lv') grep -E "[0-9]+;-;-;[0-9]+;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+				'lv') grep -E "${id_central};;-;-;[0-9]+;-;-;[0-9]+;-" $file_chm | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 					if [ ${conso_type} == 'comp' ] || [ ${conso_type} == 'all' ] ; then
-						grep -E "[0-9]+;-;-;[0-9]+;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv"
+						grep -E "${id_central};;-;-;[0-9]+;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 					elif [ ${conso_type} == 'indiv' ] ; then
-						grep -E "[0-9]+;-;-;[0-9]+;-;[0-9]+;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv"
+						grep -E "${id_central};;-;-;[0-9]+;-;[0-9]+;-;[0-9]+" $file_chm | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 					else
 						echo "Temps de traitement : ${sec_trait}s"
 						return 3
@@ -157,13 +150,64 @@ function c_wire {
 					echo "Temps de traitement : ${sec_trait}s"
 					return 2 ;;
 			esac
+			case ${station_type} in
+				'hvb') cut -d';' -f2,7,8 tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}.csv" ;;
+				'hva') cut -d';' -f3,7,8 tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}.csv" ;;
+				'lv') cut -d';' -f4,7,8 tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}.csv" ;;
+				*) 
+					echo "Temps de traitement : ${sec_trait}s"
+					return 2 ;;
+			esac
+		else
+			echo "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load" | cat > "tmp/${station_type}_${conso_type}_tmp.csv"
+			case ${station_type} in
+				'hvb') grep -E "[0-9]+;[0-9]+;-;-;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+					if [ ${conso_type} == 'comp' ] ; then
+						grep -E "[0-9]+;[0-9]+;-;-;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+					else
+						echo "Temps de traitement : ${sec_trait}s"
+						return 3
+					fi;;
+				'hva') grep -E "[0-9]+;-;[0-9]+;-;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+					if [ ${conso_type} == 'comp' ] ; then
+						grep -E "[0-9]+;-;[0-9]+;-;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+					else
+						echo "Temps de traitement : ${sec_trait}s"
+						return 3
+					fi;;
+				'lv') grep -E "[0-9]+;-;-;[0-9]+;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+					if [ ${conso_type} == 'comp' ] || [ ${conso_type} == 'all' ] ; then
+						grep -E "[0-9]+;-;-;[0-9]+;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}_tmp.csv"
+					elif [ ${conso_type} == 'indiv' ] ; then
+						grep -E "[0-9]+;-;-;[0-9]+;-;[0-9]+;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}_tmp.csv"
+					else
+						echo "Temps de traitement : ${sec_trait}s"
+						return 3
+					fi;;
+				*) 
+					echo "Temps de traitement : ${sec_trait}s"
+					return 2 ;;
+			esac
+			case ${station_type} in
+				'hvb') cut -d';' -f2,7,8 tmp/${station_type}_${conso_type}_tmp.csv | cat >> "tmp/${station_type}_${conso_type}.csv" ;;
+				'hva') cut -d';' -f3,7,8 tmp/${station_type}_${conso_type}_tmp.csv | cat >> "tmp/${station_type}_${conso_type}.csv" ;;
+				'lv') cut -d';' -f4,7,8 tmp/${station_type}_${conso_type}_tmp.csv | cat >> "tmp/${station_type}_${conso_type}.csv" ;;
+				*) 
+					echo "Temps de traitement : ${sec_trait}s"
+					return 2 ;;
+			esac
+		fi
 			
 			
 			time_end=`date +%s`
 			echo "Temps de traitement : `expr ${time_end} - ${time_start}` s"
 			
 			./c-wire_exec		# The C program
-		fi		
+			
+			if [ $station_type == 'lv' ] && [ $conso_type == 'all' ] ; then
+				./autreprogramme
+			fi
+					
 	fi
 	return 0
 } 
