@@ -44,6 +44,9 @@ function c_wire {
 				echo "not file"
 				echo "Temps de traitement : ${sec_trait}s"
 				return 2
+			elif [ ${file_chm##*.} != 'dat' ] && [ ${file_chm##*.} != 'csv' ] ; then
+				echo "file format not accepted"
+				return 2
 			fi
 		else
 			echo ${file_chm}
@@ -126,61 +129,34 @@ function c_wire {
 			done
 		else
 			echo "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load" | cat > "tmp/${station_type}_${conso_type}.csv"
-			for line in `more +2 ${file_chm}` ; do
-				hvb=`echo ${line} | cut -d';' -f2`
-				hva=`echo ${line} | cut -d';' -f3`
-				lv=`echo ${line} | cut -d';' -f4`
-				comp=`echo ${line} | cut -d';' -f5`
-				indiv=`echo ${line} | cut -d';' -f6`
-				
-				echo $line
-				
-				case ${station_type} in
-					'hvb') if [ ${hvb} != '-' ] && [ ${hva} == '-' ] && [ ${lv} == '-' ] ; then 
-						if [ ${conso_type} == 'comp' ] ; then
-							if [ ${comp} != '-' ] ; then
-								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
-							fi
-							
-						else
-							echo "Temps de traitement : ${sec_trait}s"
-							return 3
-						fi
-					fi ;;
-					'hva') if [ ${hvb} == '-' ] && [ ${hva} != '-' ] && [ ${lv} == '-' ] ; then 
-						if [ ${conso_type} == 'comp' ] ; then
-							if [ ${comp} != '-' ] ; then
-								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
-							fi
-							
-						else
-							echo "Temps de traitement : ${sec_trait}s"
-							return 3
-						fi
-					fi ;;
-					'lv') if [ ${hvb} == '-' ] && [ ${hva} == '-' ] && [ ${lv} != '-' ] ; then 
-						if [ ${conso_type} == 'all' ] ; then
-							if [ ${comp} != '-' ] || [ ${indiv} != '-' ] ; then
-								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
-							fi
-						elif [ ${conso_type} == 'comp' ] ; then
-							if [ ${comp} != '-' ] ; then
-								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
-							fi
-						elif [ ${conso_type} == 'indiv' ] ; then
-							if [ ${indiv} != '-' ] ; then
-								echo ${line} | cat >> "tmp/${station_type}_${conso_type}.csv"
-							fi
-						else
-							echo "Temps de traitement : ${sec_trait}s"
-							return 3
-						fi
-					fi ;;
-					*) 
+			case ${station_type} in
+				'hvb') grep -E "[0-9]+;[0-9]+;-;-;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+					if [ ${conso_type} == 'comp' ] ; then
+						grep -E "[0-9]+;[0-9]+;-;-;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+					else
 						echo "Temps de traitement : ${sec_trait}s"
-						return 2 ;;
-				esac
-			done
+						return 3
+					fi;;
+				'hva') grep -E "[0-9]+;-;[0-9]+;-;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+					if [ ${conso_type} == 'comp' ] ; then
+						grep -E "[0-9]+;-;[0-9]+;-;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+					else
+						echo "Temps de traitement : ${sec_trait}s"
+						return 3
+					fi;;
+				'lv') grep -E "[0-9]+;-;-;[0-9]+;-;-;[0-9]+;-" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv" 
+					if [ ${conso_type} == 'comp' ] || [ ${conso_type} == 'all' ] ; then
+						grep -E "[0-9]+;-;-;[0-9]+;[0-9]+;-;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv"
+					elif [ ${conso_type} == 'indiv' ] ; then
+						grep -E "[0-9]+;-;-;[0-9]+;-;[0-9]+;-;[0-9]+" $file_chm | cat >> "tmp/${station_type}_${conso_type}.csv"
+					else
+						echo "Temps de traitement : ${sec_trait}s"
+						return 3
+					fi;;
+				*) 
+					echo "Temps de traitement : ${sec_trait}s"
+					return 2 ;;
+			esac
 			
 			
 			time_end=`date +%s`
