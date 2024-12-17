@@ -20,6 +20,12 @@ typedef struct ch_list{
     struct ch_list* next;
 }ch_list;
 
+typedef struct{
+    int tab[10];
+    int size;
+    int tail;
+}staticfile;
+
 char* add_str(char** a, char c){
     /*add the char b to a and return a, if a doesn't exist/is equall to NULL create and return a*/
     char* temp=NULL;
@@ -284,7 +290,7 @@ Avl* add_line(Avl* tree,FILE* fichier ){
     int intload=-1;
     int intid=-1;
     c=fgetc(fichier);
-    while(c != '\n'||c != EOF){
+    while(c != '\n'||c != EOF){ //peut etre fait avec fscanf
         if(c==';'){
             count++;
         }
@@ -336,6 +342,57 @@ void Avl_free(Avl* tree){
         Avl_free(tree->sad);
         free(tree);
     }
+}
+
+void Avlwriting(FILE* fp,Avl* tree){
+    if(fp==NULL){
+        exit(21);   //invalid argument
+    }
+    //fp=fseek(SEEK_SET);
+    if(tree!=NULL){
+    fprintf(fp,"%s:%s:%s\n",tree->id,tree->load,tree->capacity);
+    Avlwriting(fp,tree->sag);
+    Avlwriting(fp,tree->sad);
+    }
+}
+
+int csvfilename(char* arg1,char* arg2,char** filename){    //rajouter .csv
+    char* temp=NULL;
+    int size1=0,size2=0;
+    size1=strlen(arg1);
+    size2=strlen(arg2);
+    temp=malloc(sizeof(char)*(size1+size2+2));
+    if(temp==NULL){
+        return 21;  //malloc error
+    }
+    for(int i=0;i<strlen(arg1);i++){
+        temp[i]=arg1[i];
+        temp[i+size1+1]=arg2[i];
+    }
+    temp[size1]='_';
+    temp[size1+size2+1]='\0';
+    *filename=temp;
+    return 0;
+}
+int programm(char* arg1,char* arg2){
+    int error=0;
+    FILE* fp=NULL;
+    char* filename=NULL;
+    if(arg1==NULL||arg2==NULL){
+        return 51;  //invalid arguments
+    }
+    error=csvfilename(arg1,arg2,&filename);
+    if(error!=0){
+        return error;
+    }
+    fp=fopen(filename,"w");
+    free(filename);
+
+
+    if(strequal(arg1,"lv")&&strequal(arg2,"all")){
+
+    }
+    return 0;
 }
 
 int main(){
