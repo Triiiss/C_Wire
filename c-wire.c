@@ -189,38 +189,6 @@ Avl* create_tree(int id,int consuption,int capacity){
     return temp;
 }
 
-Avl* insert_Avl(Avl* tree, int id, int consuption, int capacity,int* eq){
-    if(tree==NULL){
-        *eq=1;
-        return create_tree(id,consuption,capacity);
-    }
-    else if(tree->id=id){
-        tree->capacity+=capacity;
-        tree->load=consuption;
-    }
-    else if(id<tree->id){
-        tree->sag=insert_Avl(tree->sag,id,consuption,capacity,eq);
-        *eq=-*eq;
-    }
-    else if(id>tree->id){
-        tree->sad=insert_Avl(tree->sad,id,consuption,capacity,eq);
-    }
-    else{
-        *eq=0;
-        return tree;
-    }
-    if(eq!=0){
-        tree->eq=tree->eq+*eq;
-        if(tree->eq==0){
-            *eq=0;
-        }
-        else{
-            *eq=1;
-        }
-    }   
-
-}
-
 Avl* leftrotation(Avl* tree){
     Avl* pivot;
     int eq_tree=0,eq_p=0;
@@ -280,6 +248,39 @@ Avl* balance(Avl* tree){
     return tree;
 }
 
+Avl* insert_Avl(Avl* tree, int id, int consuption, int capacity,int* eq){
+    if(tree==NULL){
+        *eq=1;
+        return create_tree(id,consuption,capacity);
+    }
+    else if(tree->id==id){
+        tree->capacity+=capacity;
+        tree->load+=consuption;
+    }
+    else if(id<tree->id){
+        tree->sag=insert_Avl(tree->sag,id,consuption,capacity,eq);
+        *eq=-*eq;
+    }
+    else if(id>tree->id){
+        tree->sad=insert_Avl(tree->sad,id,consuption,capacity,eq);
+    }
+    else{
+        *eq=0;
+        return tree;
+    }
+    if(eq!=0){
+        tree->eq=tree->eq+*eq;
+        tree=balance(tree);
+        if(tree->eq==0){
+            *eq=0;
+        }
+        else{
+            *eq=1;
+        }
+    }   
+
+}
+
 Avl* add_line(Avl* tree,FILE* fichier ){
     int count=0;
     char c;
@@ -335,6 +336,17 @@ Avl* add_line(Avl* tree,FILE* fichier ){
     return tree;
 }
 
+Avl* add_linev2(Avl* tree, FILE* fp){
+    int id=-1,load=-1,capacity=-1;
+    fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
+    if(id<0||capacity<0||load<0){
+        exit(22);   //problem with fscanf
+    }
+    tree=insert_Avl(tree,id,load,capacity,&(tree->eq));
+    tree=balance(tree);
+    return tree;
+}   
+
 void Avl_free(Avl* tree){
     /*A recursive function that free all the Avl in parameter*/
     if(tree!=NULL){
@@ -374,30 +386,40 @@ int csvfilename(char* arg1,char* arg2,char** filename){    //rajouter .csv
     *filename=temp;
     return 0;
 }
+
+//endfilename 
 int programm(char* arg1,char* arg2){
     int error=0;
     FILE* fp=NULL;
     char* filename=NULL;
+    Avl* tree;
     if(arg1==NULL||arg2==NULL){
         return 51;  //invalid arguments
     }
+    fp=fopen("../tmp/tempo","r");
+    while(ftell(fp)!=SEEK_END){
+        tree=add_line(tree,fp);
+    }
+    if(strequal(arg1,"lv")&&strequal(arg2,"all")){
+
+    }
+    fclose(fp);
     error=csvfilename(arg1,arg2,&filename);
     if(error!=0){
         return error;
     }
     fp=fopen(filename,"w");
+    Avlwriting(fp,tree);
     free(filename);
-
-
-    if(strequal(arg1,"lv")&&strequal(arg2,"all")){
-
-    }
+    fclose(fp);
     return 0;
 }
 
 int main(){
     //printf("%d\n",('2'-48)*10);
     //printf("%d\n",stringtoint("10023"));
-    FILE* fichier;
+    int a;
+    /*FILE* fichier;
     fichier=fopen("c-wire_v00.dat","r");
+    fclose(fichier);*/
 }
