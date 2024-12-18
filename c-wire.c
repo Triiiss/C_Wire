@@ -184,6 +184,7 @@ Avl* create_tree(int id,int consuption,int capacity){
     temp->id=id;
     temp->load=consuption;
     temp->capacity=capacity;
+    temp->eq=0;
     temp->sad=NULL;
     temp->sag=NULL;
     return temp;
@@ -272,7 +273,7 @@ Avl* insert_Avl(Avl* tree, int id, int consuption, int capacity,int* eq){
         *eq=0;
         return tree;
     }
-    if(eq!=0){
+    if(*eq!=0){
        tree->eq=tree->eq+*eq;
         tree=balance(tree);
         if(tree->eq==0){
@@ -341,13 +342,16 @@ Avl* add_line(Avl* tree,FILE* fichier ){
 }
 //fonctionne
 Avl* add_linev2(Avl* tree, FILE* fp){
-    int id=-1,load=-1,capacity=-1;
+    int id=-1,load=0,capacity=0;
     fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
-    if(id<0||capacity<0||load<0){
+    printf("%d ,%d, %d\n",id,capacity,load);
+    /*if(id<0||capacity<0||load<0){
         exit(22);   //problem with fscanf
+    }*/
+    if(tree==NULL){ //in case the tree is NULL
+        return create_tree(id,load,capacity);
     }
     tree=insert_Avl(tree,id,load,capacity,&(tree->eq));
-    tree=balance(tree);
     return tree;
 }   
 //fonctionne
@@ -394,7 +398,7 @@ int csvfilename(char* arg1,char* arg2,char** filename){    //rajouter .csv
 void show(Avl* tree){
     /*show an Avl*/
     if(tree!=NULL){
-        printf("id :%d\n capcity : %d , consuption : %d \n eq : %d\n",tree->id,tree->capacity,tree->load,tree->eq);
+        printf("id :%d\n capcity : %d , consuption : %d \n eq : %d \n",tree->id,tree->capacity,tree->load,tree->eq,tree->eq);
         show(tree->sag);
         show(tree->sad);
     }
@@ -436,15 +440,18 @@ int main(){
     FILE* fp;
     Avl* tree=NULL;
     fp=fopen("file.txt","r");
-    tree=insert_Avl(tree,1,15,100,&b);
-    tree=insert_Avl(tree,1,50,0,&b);
-    tree=insert_Avl(tree,2,5,500,&b);
-    tree=insert_Avl(tree,3,10,150,&b);
-    tree=insert_Avl(tree,4,15,108,&b);
-    add_linev2(tree,fp);
-    add_linev2(tree,fp);
+    //tree=insert_Avl(tree,1,15,100,&b);
+    //tree=insert_Avl(tree,1,50,0,&b);
+    //tree=insert_Avl(tree,2,5,500,&b);
+    //tree=insert_Avl(tree,3,10,150,&b);
+    //tree=insert_Avl(tree,4,15,108,&b);
+    tree=add_linev2(tree,fp);
+    tree=add_linev2(tree,fp);
+    if(tree==NULL){
+        printf("NULL");
+    }
     show(tree);
-    printf("\n%d , %d\n",tree->eq,b);
+    //printf("\n%d , %d\n",tree->eq,b);
     Avl_free(tree);
     fclose(fp);
     
