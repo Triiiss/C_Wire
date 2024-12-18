@@ -344,10 +344,10 @@ Avl* add_line(Avl* tree,FILE* fichier ){
 Avl* add_linev2(Avl* tree, FILE* fp){
     int id=-1,load=0,capacity=0;
     fscanf(fp,"%d",&id);
-    printf("|%d|",ftell(fp));
+    //printf("|%d|",ftell(fp));
     fscanf(fp,";%d;",&capacity);
     fscanf(fp,";%d",&load);
-    fseek(fp,1,SEEK_CUR);
+    //fseek(fp,1,SEEK_CUR); //a mettre pour aller a la fin de la ligne
     //fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
     printf("%d,%d,%d\n",id,capacity,load);
     /*if(id<0||capacity<0||load<0){
@@ -368,14 +368,16 @@ void Avl_free(Avl* tree){
         free(tree);
     }
 }
-
+//fonctionne
 void Avlwriting(FILE* fp,Avl* tree){
     if(fp==NULL){
+        //printf("\nnull\n");
         exit(21);   //invalid argument
     }
     //fp=fseek(SEEK_SET);
     if(tree!=NULL){
-    fprintf(fp,"%s:%s:%s\n",tree->id,tree->load,tree->capacity);
+        //printf("\nfprint\n");
+    fprintf(fp,"%d:%d:%d\n",tree->id,tree->load,tree->capacity);
     Avlwriting(fp,tree->sag);
     Avlwriting(fp,tree->sad);
     }
@@ -441,25 +443,30 @@ int main(){
     //printf("%d\n",('2'-48)*10);
     //printf("%d\n",stringtoint("10023"));
     int a,b;
+    char c;
     b=0; 
     FILE* fp;
     Avl* tree=NULL;
     fp=fopen("file.txt","r");
-    //tree=insert_Avl(tree,1,15,100,&b);
-    //tree=insert_Avl(tree,1,50,0,&b);
-    //tree=insert_Avl(tree,2,5,500,&b);
-    //tree=insert_Avl(tree,3,10,150,&b);
-    //tree=insert_Avl(tree,4,15,108,&b);
+    /*tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
+    tree=add_linev2(tree,fp);*/
     if(tree==NULL){
         printf("NULL");
     }
+    while(c!=EOF){//fonctionne pas
+    
+        tree=add_linev2(tree,fp);
+        c=fgetc(fp);
+    }
     show(tree);
-    //printf("\n%d , %d\n",tree->eq,b);
-    Avl_free(tree);
     fclose(fp);
+    fp=fopen("sortie.txt","w+");
+    Avlwriting(fp,tree);
+    Avl_free(tree);
+
     
 }
