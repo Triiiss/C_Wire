@@ -343,8 +343,13 @@ Avl* add_line(Avl* tree,FILE* fichier ){
 //fonctionne
 Avl* add_linev2(Avl* tree, FILE* fp){
     int id=-1,load=0,capacity=0;
-    fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
-    printf("%d ,%d, %d\n",id,capacity,load);
+    fscanf(fp,"%d",&id);
+    printf("|%d|",ftell(fp));
+    fscanf(fp,";%d;",&capacity);
+    fscanf(fp,";%d",&load);
+    fseek(fp,1,SEEK_CUR);
+    //fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
+    printf("%d,%d,%d\n",id,capacity,load);
     /*if(id<0||capacity<0||load<0){
         exit(22);   //problem with fscanf
     }*/
@@ -445,6 +450,8 @@ int main(){
     //tree=insert_Avl(tree,2,5,500,&b);
     //tree=insert_Avl(tree,3,10,150,&b);
     //tree=insert_Avl(tree,4,15,108,&b);
+    tree=add_linev2(tree,fp);
+    tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     if(tree==NULL){
