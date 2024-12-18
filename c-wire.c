@@ -173,7 +173,7 @@ Avl* add_pwr(ch_list* list,int id){
         }
     }
 }
-
+//fonctionne
 Avl* create_tree(int id,int consuption,int capacity){
     /*create a tree and return it's address*/
     Avl* temp=NULL;
@@ -229,6 +229,7 @@ Avl* double_rightrotaion(Avl* tree){
 
 Avl* balance(Avl* tree){
     /*balance an Avl tree*/
+    printf("Balance\n");
     if(tree->eq>=2){
         if(tree->sad->eq>=0){
             return leftrotation(tree);
@@ -247,7 +248,7 @@ Avl* balance(Avl* tree){
     }
     return tree;
 }
-
+//insertion fonctionne mais pas equilibre
 Avl* insert_Avl(Avl* tree, int id, int consuption, int capacity,int* eq){
     if(tree==NULL){
         *eq=1;
@@ -256,20 +257,23 @@ Avl* insert_Avl(Avl* tree, int id, int consuption, int capacity,int* eq){
     else if(tree->id==id){
         tree->capacity+=capacity;
         tree->load+=consuption;
+        return tree;
     }
     else if(id<tree->id){
         tree->sag=insert_Avl(tree->sag,id,consuption,capacity,eq);
         *eq=-*eq;
+        return tree;
     }
     else if(id>tree->id){
         tree->sad=insert_Avl(tree->sad,id,consuption,capacity,eq);
+        return tree;
     }
     else{
         *eq=0;
         return tree;
     }
     if(eq!=0){
-        tree->eq=tree->eq+*eq;
+       tree->eq=tree->eq+*eq;
         tree=balance(tree);
         if(tree->eq==0){
             *eq=0;
@@ -335,7 +339,7 @@ Avl* add_line(Avl* tree,FILE* fichier ){
     tree=balance(tree);
     return tree;
 }
-
+//fonctionne
 Avl* add_linev2(Avl* tree, FILE* fp){
     int id=-1,load=-1,capacity=-1;
     fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
@@ -346,7 +350,7 @@ Avl* add_linev2(Avl* tree, FILE* fp){
     tree=balance(tree);
     return tree;
 }   
-
+//fonctionne
 void Avl_free(Avl* tree){
     /*A recursive function that free all the Avl in parameter*/
     if(tree!=NULL){
@@ -386,6 +390,15 @@ int csvfilename(char* arg1,char* arg2,char** filename){    //rajouter .csv
     *filename=temp;
     return 0;
 }
+//fonctionne
+void show(Avl* tree){
+    /*show an Avl*/
+    if(tree!=NULL){
+        printf("id :%d\n capcity : %d , consuption : %d \n eq : %d\n",tree->id,tree->capacity,tree->load,tree->eq);
+        show(tree->sag);
+        show(tree->sad);
+    }
+}
 
 //endfilename 
 int programm(char* arg1,char* arg2){
@@ -418,8 +431,21 @@ int programm(char* arg1,char* arg2){
 int main(){
     //printf("%d\n",('2'-48)*10);
     //printf("%d\n",stringtoint("10023"));
-    int a;
-    /*FILE* fichier;
-    fichier=fopen("c-wire_v00.dat","r");
-    fclose(fichier);*/
+    int a,b;
+    b=0; 
+    FILE* fp;
+    Avl* tree=NULL;
+    fp=fopen("file.txt","r");
+    tree=insert_Avl(tree,1,15,100,&b);
+    tree=insert_Avl(tree,1,50,0,&b);
+    tree=insert_Avl(tree,2,5,500,&b);
+    tree=insert_Avl(tree,3,10,150,&b);
+    tree=insert_Avl(tree,4,15,108,&b);
+    add_linev2(tree,fp);
+    add_linev2(tree,fp);
+    show(tree);
+    printf("\n%d , %d\n",tree->eq,b);
+    Avl_free(tree);
+    fclose(fp);
+    
 }
