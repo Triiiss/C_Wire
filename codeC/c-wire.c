@@ -34,7 +34,7 @@ int max(int a,int b, int c){
             return b;
         }
     }
-    exit(20);   //there has been a problem
+    exit(50);   //there has been a problem
 }
 
 int min(int a,int b, int c){
@@ -55,17 +55,17 @@ int min(int a,int b, int c){
             return b;
         }
     }
-    exit(20);   //there has been a problem
+    exit(50);   //there has been a problem
 }
 
 Avl* create_tree(long unsigned int id,long unsigned int consuption,long unsigned int capacity){
     /*create a tree and return it's address*/
     Avl* temp=NULL;
 
-    temp=malloc(sizeof(Avl));
+    temp = malloc(sizeof(Avl));
 
     if(temp==NULL){
-        exit(2); //malloc didn't work
+        exit(51); //malloc didn't work
     }
 
     temp->id=id;
@@ -81,16 +81,18 @@ Avl* create_tree(long unsigned int id,long unsigned int consuption,long unsigned
 Avl* leftrotation(Avl* tree){
     Avl* pivot;
     int eq_tree=0,eq_p=0;
+    
+    if (tree != NULL){
+        pivot=tree->sad;
+        tree->sad=pivot->sag;
+        pivot->sag=tree;    //faire attention
+        eq_tree=tree->eq;
+        eq_p=pivot->eq;
 
-    pivot=tree->sad;
-    tree->sad=pivot->sag;
-    pivot->sag=tree;    //faire attention
-    eq_tree=tree->eq;
-    eq_p=pivot->eq;
-
-    tree->eq=eq_tree-max(eq_p,0,0)-1;
-    pivot->eq=min(eq_tree-2,eq_tree+eq_p-2,eq_p-1);
-    tree=pivot;
+        tree->eq=eq_tree-max(eq_p,0,0)-1;
+        pivot->eq=min(eq_tree-2,eq_tree+eq_p-2,eq_p-1);
+        tree=pivot;
+    }
 
     return tree;
 }
@@ -99,31 +101,41 @@ Avl* rightrotation(Avl* tree){
     Avl* pivot;
     int eq_tree=0,eq_p=0;
 
-    pivot=tree->sag;
-    tree->sag=pivot->sad;
-    pivot->sad=tree;    //faire attention
-    eq_tree=tree->eq;
-    eq_p=pivot->eq;
+    if (tree != NULL){
+        pivot=tree->sag;
+        tree->sag=pivot->sad;
+        pivot->sad=tree;
+        eq_tree=tree->eq;
+        eq_p=pivot->eq;
 
-    tree->eq=eq_tree-min(eq_p,0,0)+1;
-    pivot->eq=max(eq_tree+2,eq_tree+eq_p+2,eq_p+1);
-    tree=pivot;
+        tree->eq=eq_tree-min(eq_p,0,0)+1;
+        pivot->eq=max(eq_tree+2,eq_tree+eq_p+2,eq_p+1);
+        tree=pivot;
+    }
 
     return tree;
 }
 
 Avl* double_leftrotaion(Avl* tree){
-    tree->sad=rightrotation(tree->sad);
+    if (tree != NULL){
+        tree->sad=rightrotation(tree->sad);
+    }
     return leftrotation(tree);
 }
 
 Avl* double_rightrotaion(Avl* tree){
-    tree->sag=leftrotation(tree->sag);
+    if (tree != NULL){
+        tree->sag=leftrotation(tree->sag);
+    }
     return rightrotation(tree);
 }
 
 Avl* balance(Avl* tree){
     /*balance an Avl tree*/
+    if (tree == NULL){
+        return tree;
+    }
+
     if(tree->eq>=2){
         if(tree->sad->eq>=0){
             return leftrotation(tree);
@@ -183,41 +195,50 @@ Avl* insert_Avl(Avl* tree, long unsigned int id, long unsigned int consuption, l
     return tree;
 }
 
-//fonctionne
 Avl* add_line(Avl* tree, FILE* fp){
     long unsigned int id=1,load=0,capacity=0;
     int h=0;
 
     if (fp == NULL){
-        return NULL;
+        exit(52);
     }
 
     fscanf(fp,"%lu;%lu;%lu",&id,&capacity,&load);
     printf("%lu,%lu,%lu\n",id,capacity,load);
 
     if(id<0||capacity<0||load<0){
-        exit(3333);   //problem with fscanf
+        exit(53);   //problem with fscanf
     }
 
-    if(tree==NULL){ //in case the tree is NULL
+    if(tree==NULL){ 
         return create_tree(id,load,capacity);
     }
     tree=insert_Avl(tree,id,load,capacity,&(h)); 
     return tree;
-}   
-//fonctionne
+}
+
 void Avl_free(Avl* tree){
     /*A recursive function that free all the Avl in parameter*/
     if(tree!=NULL){
+        tree->eq = 0;
+        tree->id = 0;
+        tree->capacity = 0;
+        tree->load = 0;
+
         Avl_free(tree->sag);
         Avl_free(tree->sad);
+
+        tree->sad = NULL;
+        tree->sag = NULL;
+
         free(tree);
     }
 }
+
 //fonctionne
 void Avlwriting(FILE* fp,Avl* tree){
     if(fp==NULL){
-        exit(21);   //invalid argument
+        exit(52);   //invalid argument
     }
     if(tree!=NULL){
         fprintf(fp,"%lu:%lu:%lu\n",tree->id,tree->capacity,tree->load);
@@ -230,7 +251,7 @@ void Avlwriting(FILE* fp,Avl* tree){
 void show(Avl* tree){
     /*show an Avl*/
     if(tree!=NULL){
-        printf("id :%d\n capcity : %d , consuption : %d \n eq : %d \n",tree->id,tree->capacity,tree->load,tree->eq);
+        printf("id :%lu\n capcity : %d , consuption : %lu \n eq : %lu \n",tree->id,tree->capacity,tree->load,tree->eq);
         show(tree->sag);
         show(tree->sad);
     }
@@ -240,41 +261,16 @@ void show(Avl* tree){
 
 int programm(){
     char c;
-    int error=0;
-    FILE* fp=NULL;
-    char* filename=NULL;
-    Avl* tree;
-
-    fp=fopen("tmp/c-wire_data.csv","r");
-
-        c=fgetc(fp);
-        while(c!=EOF){
-            if(c!='\n'){
-                break;
-            }
-            tree=add_line(tree,fp); 
-            c=fgetc(fp);
-        }
-    fclose(fp);
-
-    fp=fopen("tmp/output.csv","w+");
-        Avlwriting(fp,tree);
-    fclose(fp);
-    return 0;
-}
-
-int main(){
-    char c;
     FILE* fp=NULL;
     Avl* tree=NULL;
 
     fp=fopen("tmp/c-wire_data.csv","r");
         if (fp == NULL){
-            return 8;
+            return 52;
         }
         tree=add_line(tree,fp);
 
-        while(c!=EOF){//fonctionne 
+        while(c!=EOF){ 
             c=fgetc(fp);
             printf("|%c|\n",c);
             if(c!='\n'){
@@ -287,12 +283,22 @@ int main(){
     
     fp=fopen("tmp/output.csv","w+");
         if (fp == NULL){
-            return 23;
+            return 52;
         }
         Avlwriting(fp,tree);
     fclose(fp);
     Avl_free(tree);
-    
+    return 0;
+}
+
+int main(){
+    int error = 0;
+    error = programm();
+
+    if (error != 0){
+        printf("Error");
+        return error;
+    }
 
     return 0;
 }
