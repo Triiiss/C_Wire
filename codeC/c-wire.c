@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include<time.h>
 
 // faire file statique min et max pour poste lv
 typedef struct avl{
@@ -282,7 +283,8 @@ Avl* insert_Avl(Avl* tree, int id, int consuption, int capacity,int* eq){
         else{
             *eq=1;
         }
-    }   
+    }
+    return tree;
 
 }
 
@@ -343,12 +345,12 @@ Avl* add_line(Avl* tree,FILE* fichier ){
 //fonctionne
 Avl* add_linev2(Avl* tree, FILE* fp){
     int id=-1,load=0,capacity=0;
-    fscanf(fp,"%d",&id);
+    //fscanf(fp,"%d",&id);
     //printf("|%d|",ftell(fp));
-    fscanf(fp,";%d;",&capacity);
-    fscanf(fp,";%d",&load);
+    //fscanf(fp,";%d;",&capacity);
+    //fscanf(fp,";%d",&load);
     //fseek(fp,1,SEEK_CUR); //a mettre pour aller a la fin de la ligne
-    //fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
+    fscanf(fp,"%d;%d;%d\n",&id,&capacity,&load);
     printf("%d,%d,%d\n",id,capacity,load);
     /*if(id<0||capacity<0||load<0){
         exit(22);   //problem with fscanf
@@ -377,7 +379,7 @@ void Avlwriting(FILE* fp,Avl* tree){
     //fp=fseek(SEEK_SET);
     if(tree!=NULL){
         //printf("\nfprint\n");
-    fprintf(fp,"%d:%d:%d\n",tree->id,tree->load,tree->capacity);
+    fprintf(fp,"%d:%d:%d\n",tree->id,tree->capacity,tree->load);
     Avlwriting(fp,tree->sag);
     Avlwriting(fp,tree->sad);
     }
@@ -439,33 +441,97 @@ int programm(char* arg1,char* arg2){
     return 0;
 }
 
+/*
+Avl* addtree(Avl* tree,FILE* fp){
+    int id=-1,load=-1,capacity=-1;
+    fscanf(fp,"%d;%d;%d\n",&id,&capacity,&load);
+    tree=create_tree(id,load,capacity);
+    while(id>0||capacity<0||load<0){
+        fscanf(fp,"%d;%d;%d\n",&id,&capacity,&load);
+        insert_Avl(tree,id,load,capacity,&(tree->eq));
+        printf("%d",id);
+    }
+    return tree;
+
+}*/
+
+//faire putline boucle pour addline
 int main(){
     //printf("%d\n",('2'-48)*10);
     //printf("%d\n",stringtoint("10023"));
     int a,b;
     char c;
     b=0; 
+    //int load,capacity,line;
     FILE* fp;
     Avl* tree=NULL;
-    fp=fopen("file.txt","r");
+    /*fp=fopen("input.txt","w+");
+    srand(time(NULL));
+    for(int i=0;i<150;i++){
+        line=(rand()%5)+1;
+        capacity=(rand()%800)+10;
+        fprintf(fp,"%d;%d;%d\n",i+1,capacity,0);
+        for(int j=0;j<line;j++){
+            load=(rand()%50)+1;
+            fprintf(fp,"%d;%d;%d\n",i+1,0,load);
+        }
+    }
+    fprintf(fp,"%d;%d;%d",150,0,1);
+    fclose(fp);*/
+
     /*tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);*/
-    if(tree==NULL){
+    /*if(tree==NULL){
         printf("NULL");
-    }
+    }*//*
+   tree=add_linev2(tree,fp);
     while(c!=EOF){//fonctionne pas
-    
-        tree=add_linev2(tree,fp);
         c=fgetc(fp);
+        printf("|%c|\n",c);
+        if(c!='\n'){
+            break;
+        }
+        fseek(fp,-1,SEEK_CUR);  
+        tree=add_linev2(tree,fp);
+        c=fgetc(fp); 
+    }*/
+    int id,load,capacity;
+    long end;
+    fp=fopen("file.txt","r");
+    fseek(fp,0,SEEK_END);
+    end=ftell(fp);
+    rewind(fp);
+    //compte nombre \n
+    //prendre ftell puis revenir apres
+    while(ftell(fp)<end){
+        fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
+        if(ftell(fp)>end){
+            break;
+        }
+        if(tree==NULL){
+            tree=create_tree(id,load,capacity);
+        }
+        else{
+            tree=insert_Avl(tree,id,load,capacity,&(tree->eq));
+        }
     }
+
+    /*for(int i=0;i<5;i++){
+        fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
+        printf("%ld ",ftell(fp));
+        printf(": %ld\n",end);
+    }*/
+
+
     show(tree);
     fclose(fp);
-    fp=fopen("sortie.txt","w+");
+    fp=fopen("output.csv","w+");
     Avlwriting(fp,tree);
+    fclose(fp);
     Avl_free(tree);
 
     
