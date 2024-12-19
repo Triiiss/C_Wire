@@ -5,12 +5,12 @@
 
 // faire file statique min et max pour poste lv
 typedef struct avl{
+    long unsigned int capacity;   
+    long unsigned int load;
     struct avl* sad;
     struct avl* sag;
     int eq;
-    long unsigned int id;    //Id of the station
-    long unsigned int capacity;   
-    long unsigned int load;
+    int id;    //Id of the station
     //char type;  //P for power plant, B for HV-B station, A for HV-A stattion, L for LV post, a for HV-A consumers,b for HV-B consumers, l for LV consumers
  
 }Avl;
@@ -58,7 +58,7 @@ int min(int a,int b, int c){
     exit(50);   //there has been a problem
 }
 
-Avl* create_tree(long unsigned int id,long unsigned int consuption,long unsigned int capacity){
+Avl* create_tree(int id,long unsigned int consuption,long unsigned int capacity){
     /*create a tree and return it's address*/
     Avl* temp=NULL;
 
@@ -156,7 +156,7 @@ Avl* balance(Avl* tree){
     return tree;
 }
 //insertion fonctionne mais pas equilibre
-Avl* insert_Avl(Avl* tree, long unsigned int id, long unsigned int consuption, long unsigned int capacity,int* eq){
+Avl* insert_Avl(Avl* tree, int id, long unsigned int consuption, long unsigned int capacity,int* eq){
     if(tree==NULL){
         *eq=1;
         return create_tree(id,consuption,capacity);
@@ -192,15 +192,16 @@ Avl* insert_Avl(Avl* tree, long unsigned int id, long unsigned int consuption, l
 }
 
 Avl* add_line(Avl* tree, FILE* fp){
-    long unsigned int id=1,load=0,capacity=0;
+    int id=1;
+    long unsigned int load=0,capacity=0;
     int h=0;
 
     if (fp == NULL){
         exit(52);
     }
 
-    fscanf(fp,"%lu;%lu;%lu",&id,&capacity,&load);
-    printf("%lu,%lu,%lu\n",id,capacity,load);
+    fscanf(fp,"%d;%lu;%lu",&id,&capacity,&load);
+    printf("%d,%lu,%lu\n",id,capacity,load);
 
     if(id<0||capacity<0||load<0){
         exit(53);   //problem with fscanf
@@ -237,7 +238,7 @@ void Avlwriting(FILE* fp,Avl* tree){
         exit(52);   //invalid argument
     }
     if(tree!=NULL){
-        fprintf(fp,"%lu:%lu:%lu\n",tree->id,tree->capacity,tree->load);
+        fprintf(fp,"%d:%lu:%lu\n",tree->id,tree->capacity,tree->load);
         Avlwriting(fp,tree->sag);
         Avlwriting(fp,tree->sad);
     }
@@ -247,7 +248,7 @@ void Avlwriting(FILE* fp,Avl* tree){
 void show(Avl* tree){
     /*show an Avl*/
     if(tree!=NULL){
-        printf("id :%lu\n capcity : %ld , consuption : %lu \n eq : %d \n",tree->id,tree->capacity,tree->load,tree->eq);
+        printf("id :%d\n capcity : %ld , consuption : %lu \n eq : %d \n",tree->id,tree->capacity,tree->load,tree->eq);
         show(tree->sag);
         show(tree->sad);
     }
