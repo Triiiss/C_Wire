@@ -472,17 +472,18 @@ int main(){
     /*if(tree==NULL){
         printf("NULL");
     }*/
+   tree=add_linev2(tree,fp);
     while(c!=EOF){//fonctionne pas
-    
-        tree=add_linev2(tree,fp);
         c=fgetc(fp);
-        /*c=fgetc(fp);
-        fseek(fp,)*/
-        printf("|%c|",c);   
+        printf("|%c|\n",c);
+        if(c!='\n'){
+            break;
+        }  
+        tree=add_linev2(tree,fp); 
     }
     show(tree);
     fclose(fp);
-    fp=fopen("sortie.txt","w+");
+    fp=fopen("output.csv","w+");
     Avlwriting(fp,tree);
     Avl_free(tree);
 
