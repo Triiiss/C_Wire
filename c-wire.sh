@@ -264,7 +264,10 @@ if [ ${error} -ne 0 ] ; then		# Different error types
 		2) echo 'argument not valid';;
 		3) echo 'arguments do no match';;
 		4) echo 'C program not found';;
-		5) echo 'C program didnt compile well';;
+		50) echo 'C program didnt execute well : min/max failed';;
+		51) echo 'C program didnt execute well : malloc failed';;
+		52) echo 'C program didnt execute well : fopen failed/opening file failed';;
+		53) echo 'C program didnt execute well : fscanf failed';;
 		*) echo 'Problem unknown';; 
 	esac
 fi
