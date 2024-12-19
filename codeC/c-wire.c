@@ -462,10 +462,10 @@ int main(){
     int a,b;
     char c;
     b=0; 
-    //int load,capacity,line;
+    int load,capacity,line,id;
     FILE* fp;
     Avl* tree=NULL;
-    /*fp=fopen("input.txt","w+");
+    fp=fopen("input.txt","w+");
     srand(time(NULL));
     for(int i=0;i<150;i++){
         line=(rand()%5)+1;
@@ -477,7 +477,7 @@ int main(){
         }
     }
     fprintf(fp,"%d;%d;%d",150,0,1);
-    fclose(fp);*/
+    fclose(fp);
 
     /*tree=add_linev2(tree,fp);
     tree=add_linev2(tree,fp);
@@ -499,9 +499,8 @@ int main(){
         tree=add_linev2(tree,fp);
         c=fgetc(fp); 
     }*/
-    int id,load,capacity;
     long end;
-    fp=fopen("file.txt","r");
+    fp=fopen("input.txt","r");
     fseek(fp,0,SEEK_END);
     end=ftell(fp);
     rewind(fp);
