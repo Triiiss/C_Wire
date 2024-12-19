@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include<time.h>
+#include <time.h>
 
 // faire file statique min et max pour poste lv
 typedef struct avl{
@@ -9,17 +9,11 @@ typedef struct avl{
     struct avl* sag;
     int eq;
     int id;    //Id of the station
-    int capacity;   
-    int load;
+    long unsigned int capacity;   
+    long unsigned int load;
     //char type;  //P for power plant, B for HV-B station, A for HV-A stattion, L for LV post, a for HV-A consumers,b for HV-B consumers, l for LV consumers
  
 }Avl;
-
-typedef struct{
-    int tab[10];
-    int size;
-    int tail;
-}staticfile;
 
 
 int max(int a,int b, int c){
@@ -40,7 +34,7 @@ int max(int a,int b, int c){
             return b;
         }
     }
-    exit(21);   //there has been a problem
+    exit(20);   //there has been a problem
 }
 
 int min(int a,int b, int c){
@@ -61,10 +55,10 @@ int min(int a,int b, int c){
             return b;
         }
     }
-    exit(21);   //there has been a problem
+    exit(20);   //there has been a problem
 }
 
-Avl* create_tree(int id,int consuption,int capacity){
+Avl* create_tree(int id,long unsigned int consuption,long unsigned int capacity){
     /*create a tree and return it's address*/
     Avl* temp=NULL;
 
@@ -150,10 +144,9 @@ Avl* balance(Avl* tree){
     return tree;
 }
 //insertion fonctionne mais pas equilibre
-Avl* insert_Avl(Avl* tree, int id, int consuption, int capacity,int* eq){
+Avl* insert_Avl(Avl* tree, int id, long unsigned int consuption, long unsigned int capacity,int* eq){
     if(tree==NULL){
         *eq=1;
-
         return create_tree(id,consuption,capacity);
     }
     else if(tree->id==id){
@@ -192,17 +185,18 @@ Avl* insert_Avl(Avl* tree, int id, int consuption, int capacity,int* eq){
 
 //fonctionne
 Avl* add_line(Avl* tree, FILE* fp){
-    int id=1,load=0,capacity=0;
+    int id=1;
+    long unsigned int load=0,capacity=0;
 
     if (fp == NULL){
         return NULL;
     }
 
-    fscanf(fp,"%d;%d;%d",&id,&capacity,&load);
-    printf("%d,%d,%d\n",id,capacity,load);
+    fscanf(fp,"%d;%lu;%lu",&id,&capacity,&load);
+    printf("%d,%lu,%lu\n",id,capacity,load);
 
     if(id<0||capacity<0||load<0){
-        exit(22);   //problem with fscanf
+        exit(23);   //problem with fscanf
     }
 
     if(tree==NULL){ //in case the tree is NULL
@@ -226,7 +220,7 @@ void Avlwriting(FILE* fp,Avl* tree){
         exit(21);   //invalid argument
     }
     if(tree!=NULL){
-        fprintf(fp,"%d:%d:%d\n",tree->id,tree->capacity,tree->load);
+        fprintf(fp,"%d:%lu:%lu\n",tree->id,tree->capacity,tree->load);
         Avlwriting(fp,tree->sag);
         Avlwriting(fp,tree->sad);
     }
@@ -251,8 +245,9 @@ int programm(){
     char* filename=NULL;
     Avl* tree;
 
-    fp=fopen("../tmp/c-wire_data.csv","r");
-        c==fgetc(fp);
+    fp=fopen("tmp/c-wire_data.csv","r");
+
+        c=fgetc(fp);
         while(c!=EOF){
             if(c!='\n'){
                 break;
@@ -262,38 +257,41 @@ int programm(){
         }
     fclose(fp);
 
-    fp=fopen("../tmp/output.csv","w+");
+    fp=fopen("tmp/output.csv","w+");
         Avlwriting(fp,tree);
     fclose(fp);
     return 0;
 }
 
 int main(){
-    int a,b=0;
     char c;
-    int load,capacity,line;
     FILE* fp=NULL;
     Avl* tree=NULL;
 
-    fp=fopen("c-wire_data.csv","r");
-    tree=add_line(tree,fp);
+    fp=fopen("tmp/c-wire_data.csv","r");
+        if (fp == NULL){
+            return 23;
+        }
+        tree=add_line(tree,fp);
 
-    while(c!=EOF){//fonctionne 
-        c=fgetc(fp);
-        printf("|%c|\n",c);
-        if(c!='\n'){
-            break;
-        }  
-        tree=add_line(tree,fp); 
-    }
-
+        while(c!=EOF){//fonctionne 
+            c=fgetc(fp);
+            printf("|%c|\n",c);
+            if(c!='\n'){
+                break;
+            }  
+            tree=add_line(tree,fp); 
+        }
+    fclose(fp);
+    
+    
+    fp=fopen("tmp/output.csv","w+");
+        if (fp == NULL){
+            return 23;
+        }
+        Avlwriting(fp,tree);
     fclose(fp);
     Avl_free(tree);
-    
-    show(tree);
-    fp=fopen("test/output.csv","w+");
-    Avlwriting(fp,tree);
-    fclose(fp);
     
 
     return 0;
