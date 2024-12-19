@@ -61,7 +61,7 @@ function c_wire {
 	fi
 	
 	cp -l ${file_chm} input/${file_chm##*/}
-
+	file_chm=input/${file_chm##*/}
 
 
 	if [ ! -z ${station_type} ] ; then		# Check the type of station
@@ -113,7 +113,7 @@ function c_wire {
 			echo "Temps de traitement : ${sec_trait}s"
 			return 4
 		fi
-		make=`codeC/make`
+		make=`gcc -o codeC/c-wire_exec codeC/c-wire.c`
 		make_test=$?
 		
 		if [ ${make_test} -ne 0 ] ; then			# Compile the C program and see any errors
@@ -132,30 +132,28 @@ function c_wire {
 		mkdir graph
 	fi
 	
-	
 	# Sorting with grep
 	if [ ${id} -eq 1 ] ; then		# It checks the id of the central too
-		echo "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load" | cat > "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
 		case ${station_type} in
-			'hvb') grep -E "${id_central};[0-9]+;-;-;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
+			'hvb') grep -E "${id_central};[0-9]+;-;-;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				if [ ${conso_type} == 'comp' ] ; then
-					grep -E "${id_central};[0-9]+;-;-;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
+					grep -E "${id_central};[0-9]+;-;-;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				else
 					echo "Temps de traitement : ${sec_trait}s"
 					return 3
 				fi;;
-			'hva') grep -E "${id_central};;-;[0-9]+;-;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
+			'hva') grep -E "${id_central};;-;[0-9]+;-;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				if [ ${conso_type} == 'comp' ] ; then
-					grep -E "${id_central};;-;[0-9]+;-;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
+					grep -E "${id_central};;-;[0-9]+;-;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				else
 					echo "Temps de traitement : ${sec_trait}s"
 					return 3
 				fi;;
-			'lv') grep -E "${id_central};;-;-;[0-9]+;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
+			'lv') grep -E "${id_central};;-;-;[0-9]+;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				if [ ${conso_type} == 'comp' ] || [ ${conso_type} == 'all' ] ; then
-					grep -E "${id_central};;-;-;[0-9]+;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
+					grep -E "${id_central};;-;-;[0-9]+;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				elif [ ${conso_type} == 'indiv' ] ; then
-					grep -E "${id_central};;-;-;[0-9]+;-;[0-9]+;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv"
+					grep -E "${id_central};;-;-;[0-9]+;-;[0-9]+;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				else
 					echo "Temps de traitement : ${sec_trait}s"
 					return 3
@@ -165,35 +163,34 @@ function c_wire {
 				return 2 ;;
 		esac
 		case ${station_type} in		# Only put the number of station, the capacity and the consommation
-			'hvb') cut -d';' -f2,7,8 tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}.csv" ;;
-			'hva') cut -d';' -f3,7,8 tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}.csv" ;;
-			'lv') cut -d';' -f4,7,8 tmp/central_${id_central}_${station_type}_${conso_type}_tmp.csv | cat >> "tmp/central_${id_central}_${station_type}_${conso_type}.csv" ;;
+			'hvb') cut -d';' -f2,7,8 tmp/c-wire_data_tmp.csv | cat >> "tmp/c-wire_data.csv" ;;
+			'hva') cut -d';' -f3,7,8 tmp/c-wire_data_tmp.csv | cat >> "tmp/c-wire_data.csv" ;;
+			'lv') cut -d';' -f4,7,8 tmp/c-wire_data_tmp.csv | cat >> "tmp/c-wire_data.csv" ;;
 			*) 
 				echo "Temps de traitement : ${sec_trait}s"
 				return 2 ;;
 		esac
 	else	# No id of station needed
-		echo "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load" | cat > "tmp/${station_type}_${conso_type}_tmp.csv"
 		case ${station_type} in
-			'hvb') grep -E "[0-9]+;[0-9]+;-;-;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+			'hvb') grep -E "[0-9]+;[0-9]+;-;-;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv" 
 				if [ ${conso_type} == 'comp' ] ; then
-					grep -E "[0-9]+;[0-9]+;-;-;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+					grep -E "[0-9]+;[0-9]+;-;-;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv" 
 				else
 					echo "Temps de traitement : ${sec_trait}s"
 					return 3
 				fi;;
-			'hva') grep -E "[0-9]+;-;[0-9]+;-;-;-;[0-9]+;-" ${file_chm} |tr "-" "0" |  cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+			'hva') grep -E "[0-9]+;-;[0-9]+;-;-;-;[0-9]+;-" ${file_chm} |tr "-" "0" |  cat >> "tmp/c-wire_data_tmp.csv" 
 				if [ ${conso_type} == 'comp' ] ; then
-					grep -E "[0-9]+;-;[0-9]+;-;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+					grep -E "[0-9]+;-;[0-9]+;-;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv" 
 				else
 					echo "Temps de traitement : ${sec_trait}s"
 					return 3
 				fi;;
-			'lv') grep -E "[0-9]+;-;-;[0-9]+;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/${station_type}_${conso_type}_tmp.csv" 
+			'lv') grep -E "[0-9]+;-;-;[0-9]+;-;-;[0-9]+;-" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv" 
 				if [ ${conso_type} == 'comp' ] || [ ${conso_type} == 'all' ] ; then
-					grep -E "[0-9]+;-;-;[0-9]+;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/${station_type}_${conso_type}_tmp.csv"
+					grep -E "[0-9]+;-;-;[0-9]+;[0-9]+;-;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				elif [ ${conso_type} == 'indiv' ] ; then
-					grep -E "[0-9]+;-;-;[0-9]+;-;[0-9]+;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/${station_type}_${conso_type}_tmp.csv"
+					grep -E "[0-9]+;-;-;[0-9]+;-;[0-9]+;-;[0-9]+" ${file_chm} | tr "-" "0" | cat >> "tmp/c-wire_data_tmp.csv"
 				else
 					echo "Temps de traitement : ${sec_trait}s"
 					return 3
@@ -203,9 +200,9 @@ function c_wire {
 				return 2 ;;
 		esac
 		case ${station_type} in		# Only put the number of station, the capacity and the consommation
-			'hvb') cut -d';' -f2,7,8 tmp/${station_type}_${conso_type}_tmp.csv | cat >> "tmp/${station_type}_${conso_type}.csv" ;;
-			'hva') cut -d';' -f3,7,8 tmp/${station_type}_${conso_type}_tmp.csv | cat >> "tmp/${station_type}_${conso_type}.csv" ;;
-			'lv') cut -d';' -f4,7,8 tmp/${station_type}_${conso_type}_tmp.csv | cat >> "tmp/${station_type}_${conso_type}.csv" ;;
+			'hvb') cut -d';' -f2,7,8 tmp/c-wire_data_tmp.csv | cat >> "tmp/c-wire_data.csv" ;;
+			'hva') cut -d';' -f3,7,8 tmp/c-wire_data_tmp.csv | cat >> "tmp/c-wire_data.csv" ;;
+			'lv') cut -d';' -f4,7,8 tmp/c-wire_data_tmp.csv | cat >> "tmp/c-wire_data.csv" ;;
 			*) 
 				echo "Temps de traitement : ${sec_trait}s"
 				return 2 ;;
@@ -216,14 +213,21 @@ function c_wire {
 	time_end=`date +%s`		# Prints out the number of seconds the program took
 	echo "Temps de traitement : `expr ${time_end} - ${time_start}` s"
 	
-	exec=`./codeC/c-wire_exec ${station_type} ${conso_type}`
+	exec=`./codeC/c-wire_exec`
 	exec_error=$?		# Execute the C program
 	
-	echo $exec
+	echo ${exec}		# ERASE IT BEFORE THE ENDFIONDGAOFNDQKF
 	
 	if [ ${exec_error} -ne 0 ] ; then
+		echo ${exec_error}
 		return ${exec_error}
 	fi
+
+	
+	#echo "${station_type} Station;Capacity;Load (${conso_type})" | cat > "test/${station_type}_${conso_type}.csv"
+	#cat "tmp/c-wire_data.csv" >> "test/${station_type}_${conso_type}.csv"
+
+
 	if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then		# Execute an other program to take all the min and max
 		exec=`./lv_all_min_max`
 		exec_error=$?
@@ -234,16 +238,16 @@ function c_wire {
 	fi
 	
 	# Creation of graphics
-	gnuplot <<-EOFmarker
-	set title "${station_type} ${conso_type}"
-	set ylabel "Energy (kWh)"
-	set xlabel "Station ${station_type}"
+	#gnuplot <<-EOFmarker
+	#set title "${station_type} ${conso_type}"
+	#set ylabel "Energy (kWh)"
+	#set xlabel "Station ${station_type}"
 	
-	set datafile separator ";"
-	set terminal pngcairo enhanced
-	set output "graph/${station_type}_${conso_type}_graph.png"
-	plot "tmp/${station_type}_${conso_type}.csv" using 1:2 with impulses
-	EOFmarker
+	#set datafile separator ";"
+	#set terminal pngcairo enhanced
+	#set output "graph/${station_type}_${conso_type}_graph.png"
+	#plot "tmp/${station_type}_${conso_type}.csv" using 1:2 with impulses
+	#EOFmarker
 	
 	return 0
 }
