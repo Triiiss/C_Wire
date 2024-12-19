@@ -170,13 +170,9 @@ Avl* insert_Avl(Avl* tree, long unsigned int id, long unsigned int consuption, l
     else if(id<tree->id){
         tree->sag=insert_Avl(tree->sag,id,consuption,capacity,eq);
         *eq=-*eq;
-
-        return tree;
     }
     else if(id>tree->id){
         tree->sad=insert_Avl(tree->sad,id,consuption,capacity,eq);
-
-        return tree;
     }
     else{
         *eq=0;
@@ -251,7 +247,7 @@ void Avlwriting(FILE* fp,Avl* tree){
 void show(Avl* tree){
     /*show an Avl*/
     if(tree!=NULL){
-        printf("id :%lu\n capcity : %d , consuption : %lu \n eq : %lu \n",tree->id,tree->capacity,tree->load,tree->eq);
+        printf("id :%lu\n capcity : %ld , consuption : %lu \n eq : %d \n",tree->id,tree->capacity,tree->load,tree->eq);
         show(tree->sag);
         show(tree->sad);
     }
