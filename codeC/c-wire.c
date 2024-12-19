@@ -8,7 +8,7 @@ typedef struct avl{
     struct avl* sad;
     struct avl* sag;
     int eq;
-    int id;    //Id of the station
+    long unsigned int id;    //Id of the station
     long unsigned int capacity;   
     long unsigned int load;
     //char type;  //P for power plant, B for HV-B station, A for HV-A stattion, L for LV post, a for HV-A consumers,b for HV-B consumers, l for LV consumers
@@ -58,7 +58,7 @@ int min(int a,int b, int c){
     exit(20);   //there has been a problem
 }
 
-Avl* create_tree(int id,long unsigned int consuption,long unsigned int capacity){
+Avl* create_tree(long unsigned int id,long unsigned int consuption,long unsigned int capacity){
     /*create a tree and return it's address*/
     Avl* temp=NULL;
 
@@ -144,7 +144,7 @@ Avl* balance(Avl* tree){
     return tree;
 }
 //insertion fonctionne mais pas equilibre
-Avl* insert_Avl(Avl* tree, int id, long unsigned int consuption, long unsigned int capacity,int* eq){
+Avl* insert_Avl(Avl* tree, long unsigned int id, long unsigned int consuption, long unsigned int capacity,int* eq){
     if(tree==NULL){
         *eq=1;
         return create_tree(id,consuption,capacity);
@@ -185,24 +185,24 @@ Avl* insert_Avl(Avl* tree, int id, long unsigned int consuption, long unsigned i
 
 //fonctionne
 Avl* add_line(Avl* tree, FILE* fp){
-    int id=1;
-    long unsigned int load=0,capacity=0;
+    long unsigned int id=1,load=0,capacity=0;
+    int h=0;
 
     if (fp == NULL){
         return NULL;
     }
 
-    fscanf(fp,"%d;%lu;%lu",&id,&capacity,&load);
-    printf("%d,%lu,%lu\n",id,capacity,load);
+    fscanf(fp,"%lu;%lu;%lu",&id,&capacity,&load);
+    printf("%lu,%lu,%lu\n",id,capacity,load);
 
     if(id<0||capacity<0||load<0){
-        exit(23);   //problem with fscanf
+        exit(3333);   //problem with fscanf
     }
 
     if(tree==NULL){ //in case the tree is NULL
         return create_tree(id,load,capacity);
     }
-    tree=insert_Avl(tree,id,load,capacity,&(tree->eq));
+    tree=insert_Avl(tree,id,load,capacity,&(h)); 
     return tree;
 }   
 //fonctionne
@@ -220,7 +220,7 @@ void Avlwriting(FILE* fp,Avl* tree){
         exit(21);   //invalid argument
     }
     if(tree!=NULL){
-        fprintf(fp,"%d:%lu:%lu\n",tree->id,tree->capacity,tree->load);
+        fprintf(fp,"%lu:%lu:%lu\n",tree->id,tree->capacity,tree->load);
         Avlwriting(fp,tree->sag);
         Avlwriting(fp,tree->sad);
     }
@@ -270,7 +270,7 @@ int main(){
 
     fp=fopen("tmp/c-wire_data.csv","r");
         if (fp == NULL){
-            return 23;
+            return 8;
         }
         tree=add_line(tree,fp);
 
