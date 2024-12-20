@@ -131,10 +131,10 @@ function c_wire {
 	fi
 
 	
-
-	cp ${file_chm} input/${file_chm##*/}		# Copy the file
+	cp -l ${file_chm} input/${file_chm##*/}		# Copy the file
 	file_chm=input/${file_chm##*/}
 	
+
 	
 	
 	# Sorting with grep
@@ -201,17 +201,19 @@ function c_wire {
 				return 2 ;;
 		esac
 	fi
+	
 
 	
 
 	exec=`./codeC/c-wire_exec`
 	exec_error=$?
+	make=`make clean -C codeC/`
 	
-
 	if [ ${exec_error} -ne 0 ] ; then
 		echo ${exec_error}
 		return ${exec_error}
 	fi
+
 
 
 	if [ ${id} -eq 1 ] ; then
@@ -221,9 +223,6 @@ function c_wire {
 		echo "${station_type} Station;Capacity;Load (${conso_type})" | cat > "test/${station_type}_${conso_type}.csv"
 		cat "tmp/output.csv" >> "test/${station_type}_${conso_type}.csv"
 	fi
-
-
-
 
 	if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then		# Execute an other program to take all the min and max
 		echo "Min and Max 'capacity-load' extreme nodes" | cat > "test/lv_all_min_max.csv"
@@ -243,6 +242,29 @@ function c_wire {
 		fi
 	fi
 
+	         
+        
+	#Creation of graphics
+	if [ ${id} -eq 1 ] ; then
+		file_result="central_${id_central}_${station_type}_${conso_type}"
+	else
+		file_result="${station_type}_${conso_type}"
+	fi
+
+	max_id=`wc -l test/${file_result}.csv | cut -d" " -f1`
+	gnuplot <<-EOFmarker 
+	set title "${station_type} ${conso_type}"
+	set ylabel "Energy (kWh)"
+	set xlabel "Station ${station_type}"
+
+	set xrange [0:${max_id}]
+	
+	set datafile separator ":"
+	set terminal pngcairo enhanced
+	set output "graph/${file_result}_graph.png"
+	plot "test/${file_result}.csv" using 1:2 with impulses title "capacity", "test/${file_result}.csv" using 1:3 with impulses title "consommation"
+	EOFmarker
+
 
 	time_end=`date +%s`	# Stop the timer 
 
@@ -254,19 +276,23 @@ function c_wire {
 		echo "(checking arguments, copy the file, sorting with grep, the C program, and making the result file)"
 	fi
 
+	if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then
+		max_id=`wc -l test/lv_all_min_max.csv | cut -d" " -f1`
+		tail +3 test/lv_all_min_max.csv >> tmp/min_max.csv
+		gnuplot <<-EOFmarker 
+		set title "lv all min max"
+		set ylabel "Energy (kWh)"
+		set xlabel "Station lv"
 
-	             
-	# Creation of graphics
-	#gnuplot <<-EOFmarker
-	#set title "${station_type} ${conso_type}"
-	#set ylabel "Energy (kWh)"
-	#set xlabel "Station ${station_type}"
-	
-	#set datafile separator ";"
-	#set terminal pngcairo enhanced
-	#set output "graph/${station_type}_${conso_type}_graph.png"
-	#plot "tmp/${station_type}_${conso_type}.csv" using 1:2 with impulses
-	#EOFmarker
+		set xrange [0:${max_id}]
+		
+		set datafile separator ":"
+		set terminal pngcairo enhanced
+		set output "graph/lv_all_min_max_graph.png"
+		plot "tmp/min_max.csv" using 0:2 with impulses title "capacity", "tmp/min_max.csv" using 0:3 with impulses title "consommation"
+		EOFmarker
+	fi
+
 	
 	return 0
 }
