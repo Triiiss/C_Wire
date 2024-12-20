@@ -77,7 +77,7 @@ function c_wire {
 
 
 
-	arg_check_time_start=`date +%s`	# Start the timer for the arguments
+	time_start=`date +%s`	# Start the timer
 
 	if [ ! -z ${file_chm} ] && [ -e ${file_chm} ] ; then		# Check if the file is here and indeed a file
 		if [ ! -f ${file_chm} ] ; then
@@ -130,23 +130,12 @@ function c_wire {
 		id=1
 	fi
 
-	arg_check_time_end=`date +%s`	# Stop the timer for the arguments
-
-	echo "Arguments verification : processing time : `expr ${arg_check_time_end} - ${arg_check_time_start}` s"
 	
 
-	copy_time_start=`date +%s`	# Start the timer for the copy
-
-	cp -l ${file_chm} input/${file_chm##*/}		# Copy the file
+	cp ${file_chm} input/${file_chm##*/}		# Copy the file
 	file_chm=input/${file_chm##*/}
-
-	copy_time_end=`date +%s`	# Stop the timer for the copy
-	
-	echo "Copy file to input directory : processing time : `expr ${copy_time_end} - ${copy_time_start}` s"
 	
 	
-	
-	sort_time_end=`date +%s`	# Start the timer for the sorting
 	
 	# Sorting with grep
 	if [ ${id} -eq 1 ] ; then		# It checks the id of the central too
@@ -213,19 +202,11 @@ function c_wire {
 		esac
 	fi
 
-	sort_time_end=`date +%s`	# Stop the timer for the sorting
-		
-	echo "Sorting with grep : processing time : `expr ${sort_time_end} - ${sort_time_start}` s"
-		
 	
-	C_time_start=`date +%s`	# Start the timer for the C program
 
 	exec=`./codeC/c-wire_exec`
 	exec_error=$?
 	
-	C_time_end=`date +%s`	# Stop the timer for the C program
-
-	#echo "C program : processing time : `expr ${C_time_end} - ${C_time_start}` s"
 
 	if [ ${exec_error} -ne 0 ] ; then
 		echo ${exec_error}
@@ -233,7 +214,6 @@ function c_wire {
 	fi
 
 
-	ouput_time_start=`date +%s`	# Start the timer for the output
 	if [ ${id} -eq 1 ] ; then
 		echo "${station_type} Station;Capacity;Load (${conso_type}) central ${id_central}" | cat > "test/central_${id_central}_${station_type}_${conso_type}.csv"
 		cat "tmp/output.csv" >> "test/central_${id_central}_${station_type}_${conso_type}.csv"
@@ -241,19 +221,41 @@ function c_wire {
 		echo "${station_type} Station;Capacity;Load (${conso_type})" | cat > "test/${station_type}_${conso_type}.csv"
 		cat "tmp/output.csv" >> "test/${station_type}_${conso_type}.csv"
 	fi
-	ouput_time_end=`date +%s`	# Stop the timer for the output
-
-	#echo "Ouput file creation : processing time : `expr ${output_time_end} - ${output_time_start}` s"
 
 
-	#if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then		# Execute an other program to take all the min and max
-	#	sort -n -t';' -k3
-	#	tail "tmp/output.csv" >> "test/lv_all_min_max.csv"
-	#	head "tmp/output.csv" >> "test/lv_all_min_max.csv"
-	#fi
 
 
+	if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then		# Execute an other program to take all the min and max
+		echo "Min and Max 'capacity-load' extreme nodes" | cat > "test/lv_all_min_max.csv"
+		echo "LV station:Capacity:Load (all)" | cat >> "test/lv_all_min_max.csv"
+
+		if [ `wc -l tmp/output.csv | cut -d" " -f1` -lt 20 ] ; then
+			if [ `wc -l tmp/output.csv | cut -d" " -f1` -lt 10 ] ; then
+				sort -r -t':' -k3 tmp/output.csv | head -n2 >> "test/lv_all_min_max.csv"
+				sort -t':' -k3 tmp/output.csv | head -n2 >> "test/lv_all_min_max.csv"
+			else
+				sort -r -t':' -k3 tmp/output.csv | head -n5 >> "test/lv_all_min_max.csv"
+				sort -t':' -k3 tmp/output.csv | head -n5 >> "test/lv_all_min_max.csv"
+			fi
+		else
+			sort -r -t':' -k3 tmp/output.csv | head -n10 >> "test/lv_all_min_max.csv"
+			sort -t':' -k3 tmp/output.csv | head -n10 >> "test/lv_all_min_max.csv"
+		fi
+	fi
+
+
+	time_end=`date +%s`	# Stop the timer 
+
+	echo "Processing time : `expr ${time_end} - ${time_start}` s"
 	
+	if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then
+		echo "(checking arguments, copy the file, sorting with grep, the C program, making the result file and the min max)"
+	else 
+		echo "(checking arguments, copy the file, sorting with grep, the C program, and making the result file)"
+	fi
+
+
+	             
 	# Creation of graphics
 	#gnuplot <<-EOFmarker
 	#set title "${station_type} ${conso_type}"
