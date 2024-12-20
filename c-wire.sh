@@ -265,17 +265,6 @@ function c_wire {
 	plot "test/${file_result}.csv" using 1:2 with impulses title "capacity", "test/${file_result}.csv" using 1:3 with impulses title "consommation"
 	EOFmarker
 
-
-	time_end=`date +%s`	# Stop the timer 
-
-	echo "Processing time : `expr ${time_end} - ${time_start}` s"
-	
-	if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then
-		echo "(checking arguments, copy the file, sorting with grep, the C program, making the result file and the min max)"
-	else 
-		echo "(checking arguments, copy the file, sorting with grep, the C program, and making the result file)"
-	fi
-
 	if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then
 		max_id=`wc -l test/lv_all_min_max.csv | cut -d" " -f1`
 		tail +3 test/lv_all_min_max.csv >> tmp/min_max.csv
@@ -291,6 +280,17 @@ function c_wire {
 		set output "graph/lv_all_min_max_graph.png"
 		plot "tmp/min_max.csv" using 0:2 with impulses title "capacity", "tmp/min_max.csv" using 0:3 with impulses title "consommation"
 		EOFmarker
+	fi
+
+
+	time_end=`date +%s`	# Stop the timer 
+
+	echo "Processing time : `expr ${time_end} - ${time_start}` s"
+	
+	if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then
+		echo "(checking arguments, copy the file, sorting with grep, the C program, making the result file, the min max and the graphs)"
+	else 
+		echo "(checking arguments, copy the file, sorting with grep, the C program, making the result file and the graph)"
 	fi
 
 	
