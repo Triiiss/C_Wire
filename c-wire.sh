@@ -11,8 +11,6 @@ nb_arg=$#
 
 help=0
 id=0
-sec_trait=0
-time_start=`date +%s`
 
 
 
@@ -42,92 +40,10 @@ function c_wire {
 		
 		return 0
 	fi
-	
 
-	if [ ! -z ${file_chm} ] && [ -e ${file_chm} ] ; then		# Check if the file is here and indeed a file
-		if [ ! -f ${file_chm} ] ; then
-			echo "not file"
-			echo "Temps de traitement : ${sec_trait}s"
-			return 2
-		elif [ ${file_chm##*.} != 'dat' ] && [ ${file_chm##*.} != 'csv' ] ; then
-			echo "file format not accepted"
-			return 2
-		fi
-	else
-		echo ${file_chm}
-		echo "missing file"
-		echo "Temps de traitement : ${sec_trait}s"
-		return 1
-	fi
-	
-	cp -l ${file_chm} input/${file_chm##*/}		# Copy the file
-	file_chm=input/${file_chm##*/}
-
-
-	if [ ! -z ${station_type} ] ; then		# Check the type of station
-		if [ ${station_type} != 'hvb' ] && [ ${station_type} != 'hva' ] && [ ${station_type} != 'lv' ] ; then
-			echo 'station type incorrect'
-			echo "Temps de traitement : ${sec_trait}s"
-			return 2
-		fi
-	else
-		echo 'No arguments for station type'
-		echo "Temps de traitement : ${sec_trait}s"
-		return 1
-	fi
 	
 	
-	
-	if [ ! -z ${conso_type} ] ; then		# Check the type of consummers and if they match with the type of station
-		case ${conso_type} in
-			'indiv') if [ ${station_type} == 'hva' ] || [ ${station_type} == 'hvb' ] ; then
-				echo "${station_type} cannot be with ${conso_type}"
-				echo "Temps de traitement : ${sec_trait}s"
-				return 3
-			fi;;
-			'all') if [ ${station_type} == 'hva' ] || [ ${station_type} == 'hvb' ] ; then
-				echo "${station_type} cannot be with ${conso_type}"
-				echo "Temps de traitement : ${sec_trait}s"
-				return 3
-			fi;;
-			'comp') ;;
-			*) echo 'consummers type not valid'
-			echo "Temps de traitement : ${sec_trait}s"
-			return 2 ;;
-		esac
-	else
-		echo 'No arguments for consummers type'
-		echo "Temps de traitement : ${sec_trait}s"
-		return 1
-	fi
-	
-	
-	
-	if [ ! -z ${id_central} ] && [ ${id_central} -le 5 ] && [ ${id_central} -gt 0 ] ; then		# Check the id central
-		id=1
-	fi
-	
-	if [ ! -e "codeC" ] || [ ! -d "codeC" ] ; then
-		echo "No directory codeC"
-		return 4
-	fi
-	if [ ! -e "codeC/c-wire_exec" ] || [ ! -f "codeC/c-wire_exec" ] ; then	# Check if the execution file exists
-		if [ ! -e "codeC/c-wire.c" ] && [ ! -f "codeC/c-wire.c" ] ; then
-			echo "Temps de traitement : ${sec_trait}s"
-			return 4
-		fi
-		make=`make -C codeC/`
-		make_test=$?
-		
-		if [ ${make_test} -ne 0 ] ; then			# Compile the C program and see any errors
-			echo "Temps de traitement : ${sec_trait}s"
-			return ${make_test}
-		fi
-	fi
-	
-	
-	
-	if [ -e "tmp" ] && [ -d "tmp" ]; then		# Check for tmp and graph directory and empty tmp (erase it and recreate it)
+	if [ -e "tmp" ] && [ -d "tmp" ]; then		# Check and create differents directories
 		rm -r tmp
 	fi
 	mkdir tmp
@@ -140,6 +56,97 @@ function c_wire {
 	if [ ! -e test ] || [ ! -d test ] ; then
 		mkdir test
 	fi
+	if [ ! -e "codeC" ] || [ ! -d "codeC" ] ; then
+		echo "No directory codeC"
+		return 4
+	fi
+
+
+
+	if [ ! -e "codeC/c-wire_exec" ] || [ ! -f "codeC/c-wire_exec" ] ; then	# Check if the execution file exists
+		if [ ! -e "codeC/c-wire.c" ] && [ ! -f "codeC/c-wire.c" ] ; then
+			return 4
+		fi
+		make=`make -C codeC/`
+		make_test=$?
+		
+		if [ ${make_test} -ne 0 ] ; then			# Compile the C program and see any errors
+			return ${make_test}
+		fi
+	fi
+
+
+
+	arg_check_time_start=`date +%s`	# Start the timer for the arguments
+
+	if [ ! -z ${file_chm} ] && [ -e ${file_chm} ] ; then		# Check if the file is here and indeed a file
+		if [ ! -f ${file_chm} ] ; then
+			echo "not file"
+			return 2
+		elif [ ${file_chm##*.} != 'dat' ] && [ ${file_chm##*.} != 'csv' ] ; then
+			echo "file format not accepted"
+			return 2
+		fi
+	else
+		echo ${file_chm}
+		echo "missing file"
+		return 1
+	fi
+	
+
+
+	if [ ! -z ${station_type} ] ; then		# Check the type of station
+		if [ ${station_type} != 'hvb' ] && [ ${station_type} != 'hva' ] && [ ${station_type} != 'lv' ] ; then
+			echo 'station type incorrect'
+			return 2
+		fi
+	else
+		echo 'No arguments for station type'
+		return 1
+	fi
+	
+	
+	
+	if [ ! -z ${conso_type} ] ; then		# Check the type of consummers and if they match with the type of station
+		case ${conso_type} in
+			'indiv') if [ ${station_type} == 'hva' ] || [ ${station_type} == 'hvb' ] ; then
+				echo "${station_type} cannot be with ${conso_type}"
+				return 3
+			fi;;
+			'all') if [ ${station_type} == 'hva' ] || [ ${station_type} == 'hvb' ] ; then
+				echo "${station_type} cannot be with ${conso_type}"
+				return 3
+			fi;;
+			'comp') ;;
+			*) echo 'consummers type not valid'
+			return 2 ;;
+		esac
+	else
+		echo 'No arguments for consummers type'
+		return 1
+	fi
+	
+	if [ ! -z ${id_central} ] && [ ${id_central} -le 5 ] && [ ${id_central} -gt 0 ] ; then		# Check the id central
+		id=1
+	fi
+
+	arg_check_time_end=`date +%s`	# Stop the timer for the arguments
+
+	echo "Arguments verification : processing time : `expr ${arg_check_time_end} - ${arg_check_time_start}` s"
+	
+
+	copy_time_start=`date +%s`	# Start the timer for the copy
+
+	cp -l ${file_chm} input/${file_chm##*/}		# Copy the file
+	file_chm=input/${file_chm##*/}
+
+	copy_time_end=`date +%s`	# Stop the timer for the copy
+	
+	echo "Copy file to input directory : processing time : `expr ${copy_time_end} - ${copy_time_start}` s"
+	
+	
+	
+	sort_time_end=`date +%s`	# Start the timer for the sorting
 	
 	# Sorting with grep
 	if [ ${id} -eq 1 ] ; then		# It checks the id of the central too
@@ -205,20 +212,28 @@ function c_wire {
 				return 2 ;;
 		esac
 	fi
+
+	sort_time_end=`date +%s`	# Stop the timer for the sorting
 		
+	echo "Sorting with grep : processing time : `expr ${sort_time_end} - ${sort_time_start}` s"
 		
-	time_end=`date +%s`		# Prints out the number of seconds the program took
-	echo "Temps de traitement : `expr ${time_end} - ${time_start}` s"
 	
+	C_time_start=`date +%s`	# Start the timer for the C program
+
 	exec=`./codeC/c-wire_exec`
 	exec_error=$?
+	
+	C_time_end=`date +%s`	# Stop the timer for the C program
 
+	#echo "C program : processing time : `expr ${C_time_end} - ${C_time_start}` s"
 
 	if [ ${exec_error} -ne 0 ] ; then
 		echo ${exec_error}
 		return ${exec_error}
 	fi
 
+
+	ouput_time_start=`date +%s`	# Start the timer for the output
 	if [ ${id} -eq 1 ] ; then
 		echo "${station_type} Station;Capacity;Load (${conso_type}) central ${id_central}" | cat > "test/central_${id_central}_${station_type}_${conso_type}.csv"
 		cat "tmp/output.csv" >> "test/central_${id_central}_${station_type}_${conso_type}.csv"
@@ -226,6 +241,10 @@ function c_wire {
 		echo "${station_type} Station;Capacity;Load (${conso_type})" | cat > "test/${station_type}_${conso_type}.csv"
 		cat "tmp/output.csv" >> "test/${station_type}_${conso_type}.csv"
 	fi
+	ouput_time_end=`date +%s`	# Stop the timer for the output
+
+	#echo "Ouput file creation : processing time : `expr ${output_time_end} - ${output_time_start}` s"
+
 
 	#if [ ${station_type} == 'lv' ] && [ ${conso_type} == 'all' ] ; then		# Execute an other program to take all the min and max
 	#	sort -n -t';' -k3
@@ -249,16 +268,17 @@ function c_wire {
 	
 	return 0
 }
-
 	
 
 c_wire=`c_wire`
 error=$?
 
 echo -e "${c_wire}"
+if [ ${error} -eq 1 ] || [ ${error} -eq 2 ] || [ ${error} -eq 3 ] ; then
+	echo "Arguments verification : processing time : 0 s"
+fi
 
 if [ ${error} -ne 0 ] ; then		# Different error types
-	echo $error
 	case ${error} in 
 		1) echo 'agrument missing';;
 		2) echo 'argument not valid';;
@@ -270,4 +290,5 @@ if [ ${error} -ne 0 ] ; then		# Different error types
 		53) echo 'C program didnt execute well : fscanf failed';;
 		*) echo 'Problem unknown';; 
 	esac
+	echo "code error ${error}"
 fi
