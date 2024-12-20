@@ -13,5 +13,4 @@ c-wire_exec: c-wire.o Avl.o utilitary.o main.h
 	gcc utilitary.o Avl.o c-wire.o -o c-wire_exec
 	
 clean :
-	rm -f *.o
-	rm c-wire_exec
+	rm -f c-wire_exec *.o 
