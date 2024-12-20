@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
-// faire file statique min et max pour poste lv
 typedef struct avl{
     long unsigned int capacity;   
     long unsigned int load;
@@ -11,13 +9,11 @@ typedef struct avl{
     struct avl* sag;
     int eq;
     int id;    //Id of the station
-    //char type;  //P for power plant, B for HV-B station, A for HV-A stattion, L for LV post, a for HV-A consumers,b for HV-B consumers, l for LV consumers
- 
 }Avl;
 
 
 int max(int a,int b, int c){
-    /*take 3 int in parameter and return the biggset one*/
+    /*Take 3 int in parameter and return the biggset one*/
     if(a>b){
         if(c>a){
             return c;
@@ -38,7 +34,7 @@ int max(int a,int b, int c){
 }
 
 int min(int a,int b, int c){
-    /*take 3 int in parameter and return the smallest one*/
+    /*Take 3 int in parameter and return the smallest one*/
     if(a<b){
         if(c<a){
             return c;
@@ -58,8 +54,8 @@ int min(int a,int b, int c){
     exit(50);   //there has been a problem
 }
 
-Avl* create_tree(int id,long unsigned int consuption,long unsigned int capacity){
-    /*create a tree and return it's address*/
+Avl* create_tree(int id,long unsigned int load,long unsigned int capacity){
+    /*Create a tree and return it's address*/
     Avl* temp=NULL;
 
     temp = malloc(sizeof(Avl));
@@ -69,7 +65,7 @@ Avl* create_tree(int id,long unsigned int consuption,long unsigned int capacity)
     }
 
     temp->id=id;
-    temp->load=consuption;
+    temp->load=load;
     temp->capacity=capacity;
     temp->eq=0;
     temp->sad=NULL;
@@ -79,6 +75,7 @@ Avl* create_tree(int id,long unsigned int consuption,long unsigned int capacity)
 }
 
 Avl* leftrotation(Avl* tree){
+    /*Make an avl left rotation and return the avl tree, if tree is NULL return tree*/
     Avl* pivot;
     int eq_tree=0,eq_p=0;
     
@@ -98,6 +95,7 @@ Avl* leftrotation(Avl* tree){
 }
 
 Avl* rightrotation(Avl* tree){
+    /*Make an avl right rotation and return the avl tree, if tree is NULL return tree*/
     Avl* pivot;
     int eq_tree=0,eq_p=0;
 
@@ -117,6 +115,7 @@ Avl* rightrotation(Avl* tree){
 }
 
 Avl* double_leftrotaion(Avl* tree){
+    /*Make an avl double left rotation and return the avl tree, if tree is NULL return tree*/
     if (tree != NULL){
         tree->sad=rightrotation(tree->sad);
     }
@@ -124,6 +123,7 @@ Avl* double_leftrotaion(Avl* tree){
 }
 
 Avl* double_rightrotaion(Avl* tree){
+    /*Make an avl double right rotation and return the avl tree, if tree is NULL return tree*/
     if (tree != NULL){
         tree->sag=leftrotation(tree->sag);
     }
@@ -131,7 +131,7 @@ Avl* double_rightrotaion(Avl* tree){
 }
 
 Avl* balance(Avl* tree){
-    /*balance an Avl tree*/
+    /*Balance an Avl tree*/
     if (tree == NULL){
         return tree;
     }
@@ -155,30 +155,30 @@ Avl* balance(Avl* tree){
 
     return tree;
 }
-//insertion fonctionne mais pas equilibre
-Avl* insert_Avl(Avl* tree, int id, long unsigned int consuption, long unsigned int capacity,int* eq){
+Avl* insert_Avl(Avl* tree, int id, long unsigned int load, long unsigned int capacity,int* eq){
+    /*A function that add a node with id ,load and cpacity to the avl tree*/
     if(tree==NULL){
         *eq=1;
-        return create_tree(id,consuption,capacity);
+        return create_tree(id,load,capacity);
     }
     else if(tree->id==id){
         tree->capacity+=capacity;
-        tree->load+=consuption;
+        tree->load+=load;
 
         return tree;
     }
     else if(id<tree->id){
-        tree->sag=insert_Avl(tree->sag,id,consuption,capacity,eq);
+        tree->sag=insert_Avl(tree->sag,id,load,capacity,eq);
         *eq=-*eq;
     }
     else if(id>tree->id){
-        tree->sad=insert_Avl(tree->sad,id,consuption,capacity,eq);
+        tree->sad=insert_Avl(tree->sad,id,load,capacity,eq);
     }
     else{
         *eq=0;
         return tree;
     }
-    if(*eq!=0){
+    if(*eq!=0){ //this section of the code is changing the equiliber of the tree
        tree->eq=tree->eq+*eq;
         tree=balance(tree);
         if(tree->eq==0){
@@ -192,16 +192,16 @@ Avl* insert_Avl(Avl* tree, int id, long unsigned int consuption, long unsigned i
 }
 
 Avl* add_line(Avl* tree, FILE* fp){
-    int id=1;
-    long unsigned int load=0,capacity=0;
+    /*Take a line in the file fp and add it inside the avl tree*/
+    int id=-1;
+    long unsigned int load=-1,capacity=-1;  //ligne changé
     int h=0;
 
     if (fp == NULL){
         exit(52);
     }
 
-    fscanf(fp,"%d;%lu;%lu",&id,&capacity,&load);
-    printf("%d,%lu,%lu\n",id,capacity,load);
+    fscanf(fp,"%d;%lu;%lu",&id,&capacity,&load);    //take the variable in the file 
 
     if(id<0||capacity<0||load<0){
         exit(53);   //problem with fscanf
@@ -232,31 +232,30 @@ void Avl_free(Avl* tree){
     }
 }
 
-//fonctionne
 void Avlwriting(FILE* fp,Avl* tree){
+    /*Write the avl tree inside the file fp*/
     if(fp==NULL){
         exit(52);   //invalid argument
     }
     if(tree!=NULL){
-        fprintf(fp,"%d:%lu:%lu\n",tree->id,tree->capacity,tree->load);
+        fprintf(fp,"%d:%lu:%lu\n",tree->id,tree->capacity,tree->load);  //add the line in the file
         Avlwriting(fp,tree->sag);
         Avlwriting(fp,tree->sad);
     }
 }
 
-//fonctionne
 void show(Avl* tree){
-    /*show an Avl*/
+    /*Show the Avl tree put into parameter in your command prompt, isn't used in the programm*/
     if(tree!=NULL){
-        printf("id :%d\n capcity : %ld , consuption : %lu \n eq : %d \n",tree->id,tree->capacity,tree->load,tree->eq);
+        printf("id :%d\n capcity : %lu , load : %lu \n eq : %d \n",tree->id,tree->capacity,tree->load,tree->eq);
         show(tree->sag);
         show(tree->sad);
     }
 }
 
-//endfilename 
 
 int programm(){
+    /*Main programm, take the file in tmp and create an avl tree and write the results of ths avl tree inside the file output.csv*/
     char c;
     FILE* fp=NULL;
     Avl* tree=NULL;
@@ -269,8 +268,7 @@ int programm(){
 
         while(c!=EOF){ 
             c=fgetc(fp);
-            printf("|%c|\n",c);
-            if(c!='\n'){
+            if(c!='\n'){    //check if we are at the end of the file, c value would be EOF
                 break;
             }  
             tree=add_line(tree,fp); 
